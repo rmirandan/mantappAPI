@@ -77,15 +77,17 @@ class Register(Resource):
 
 class Login(Resource):
   def post(self):
-    auth = request.authorization
+    parser.add_argument('username')
+    parser.add_argument('password')
+    auth = parser.parse_args()
 
-    if not auth or not auth.username or not auth.password:
-      return make_response(jsonify({'Could not verify auth' : {'WWW-Authenticate' : 'Basic realm="Login required!"'}}),401)
+    if not auth.username or not auth.password:
+      return make_response(jsonify({'Could not verify auth' : "Login required!" }),401)
 
     user = User.query.filter_by(email=auth.username).first()
 
     if not user:
-      return make_response(jsonify({'Could not verify user' : {'WWW-Authenticate' : 'Basic realm="Login required!"'}}),401)
+      return make_response(jsonify({"message" : "Usuario no existe..."}),401)
 
     if check_password_hash(user.password, auth.password):
         token = jwt.encode({'public_id' : user.public_id, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'])
